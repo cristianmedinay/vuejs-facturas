@@ -110,7 +110,9 @@ import InvoiceSummary from '../components/InvoiceSummary.vue'
 import { useStore } from 'vuex';
 import router from '../../router';
 
+import { Database } from '../../db/database';
 
+    const offline = new Database();
 export default defineComponent({
     name: 'InvoiceForm',
     data() {
@@ -129,6 +131,7 @@ export default defineComponent({
   },
 
     setup(props, { context }) {
+     
       const store = useStore();
         const invoiceData = reactive({
       number: '',
@@ -259,7 +262,7 @@ export default defineComponent({
         
         }
         } */
-        const submitInvoice = () => {
+        const submitInvoice = async () => {
        /*    if (validateForm()) {
                       const invoiceToSave = {
                 ...JSON.parse(JSON.stringify(invoiceData)), 
@@ -287,6 +290,10 @@ export default defineComponent({
                 total: (item.unitPrice * item.units * (1 + item.vatRate / 100)).toFixed(2)
               }))
             };
+
+
+             await offline.saveInvoice(invoiceToSave);
+
 
             // Guardar usando Vuex
             store.dispatch('saveInvoice', invoiceToSave);

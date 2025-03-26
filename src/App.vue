@@ -4,7 +4,7 @@
      
       <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-          <a class="navbar-brand" href="#">Sistema de Facturación</a>
+          <a class="navbar-brand primary" href="#" >Sistema de Facturación</a>
           <button 
             class="navbar-toggler" 
             type="button" 
@@ -41,9 +41,10 @@
 </template>
 
 <script>
-import { computed, defineComponent, onMounted } from 'vue';
+import { computed, defineComponent, onMounted, ref } from 'vue';
 
 import { Database } from "./db/database";
+import eventBus from './db/eventbus';
       const offline = new Database();
 
 export default defineComponent({
@@ -53,16 +54,53 @@ export default defineComponent({
     },
     props: {},
     setup() {
-      offline.initProvider();
+
+    offline.initProvider();
     const currentYear = computed(() => new Date().getFullYear())
+    const dbReady = ref(false);
     
-    onMounted(() => {
+   /*  onMounted(() => {
       
       eventBus().emitter.on("sendData", () => {
         offline.sendData();
       });
+      eventBus().emitter.on("saveInvoice", () => {
+        offline.saveInvoice();
+      });
+    
+    }); */
 
-    });
+    onMounted(async () => {
+      try {
+              /*   await offline.initProvider();
+                dbReady.value = true;
+                
+                // Configurar listeners de eventos
+                eventBus().emitter.on("sendData", offline.sendData);
+                eventBus().emitter.on("saveInvoice", offline.saveInvoice);
+                
+                // Guardar factura de prueba (opcional)
+                const result = await offline.saveInvoice({
+                    number: "FAC-2023-001",
+                    client: {
+                        name: "Juan Pérez",
+                        dni: "12345678A",
+                        address: "Calle Falsa 123"
+                    },
+                    items: [{
+                        description: "Producto 1",
+                        unitPrice: 100,
+                        units: 2,
+                        vatRate: 21
+                    }]
+                }); */
+                
+                console.log("Resultado de guardar:", result);
+                
+            } catch (error) {
+                console.error("Error inicializando DB:", error);
+            }
+        });
     return {
       currentYear
     }
@@ -72,6 +110,10 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+
+
+
+
 .app-container {
   display: flex;
   min-height: 100vh;
@@ -88,5 +130,18 @@ main {
 
 footer {
   border-top: 1px solid #dee2e6;
+}
+
+
+///SAS
+.primary {
+  color: $primary-color;
+  font-weight: bold;
+  /* Puedes sobrescribir estilos de Bootstrap */
+  padding: 0.8rem 1rem;
+  
+  &:hover {
+    color: darken($primary-color, 10%);
+  }
 }
 </style>

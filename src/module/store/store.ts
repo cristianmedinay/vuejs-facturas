@@ -1,21 +1,6 @@
 // store.js
 import { createStore } from 'vuex';
-interface Invoice {
-    number: string;
-    date: string;
-    client: {
-      name: string;
-      dni: string;
-      // ...otros campos
-    };
-    items: Array<{
-      description: string;
-      unitPrice: number;
-      units: number;
-      vatRate: number;
-      total: number;
-    }>;
-  }
+import {type Invoice } from '../../db/interface';
   
 interface State {
     invoices: Invoice[];

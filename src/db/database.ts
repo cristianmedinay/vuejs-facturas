@@ -1,6 +1,6 @@
-// database.ts
-import store from '../module/store/store'; // Asegúrate de importar tu store
 
+// import type { Invoice } from '../db/interface'; // Removed as it is not used
+import eventBus from './eventbus';
 export class Database {
     public db!: IDBDatabase;
     
@@ -9,65 +9,34 @@ export class Database {
     }
 
 
-    
-    public sendData(): Promise<void> {
+  
 
-        if (this.db != undefined) {
-    
-    
-          return new Promise(() => {
-    
-            const db = this.db;
-            const tx = db.transaction('checkin', 'readwrite');
-            const checkin = tx.objectStore('checkin');
-    
-            const enviado: IDBIndex = checkin.index('enviado');
-            //console.log('datos chekin '+enviado);
-            const results = enviado.getAll(IDBKeyRange.only(0));
-    
-    
-            results.onsuccess = function () {
-              results.result.forEach(function (el) {
-                console.log(el)
-                /* ApiService.postCheckin(el).then((data) => {
-                  //comentado
-                  //console.log(data);
-                  if (data.data == 1) {
-                    el.enviado = 1;
-                    const tx = db.transaction('checkin', 'readwrite');
-                    const checkin = tx.objectStore('checkin');
-                    checkin.put(el);
-                  }
-                }); */
-              });
-            }
-    
-          });
-      } else {
-      return new Promise(() => {
-        console.log("not ready");
-      });
-    }
-    }
     private initDb(): Promise<void> {
         return new Promise(resolve => {
             const openRequest = indexedDB.open('facturacionDB', 3);
 
             openRequest.onupgradeneeded = event => {
-                const db = (event.target as IDBOpenDBRequest).result;
+
                 
-                if (!db.objectStoreNames.contains('facturas')) {
+            if (this.db) {
+                console.log("already init");
+                resolve();
+            }
+              /*   const db = (event.target as IDBOpenDBRequest).result; */
+              const target: EventTarget | null = event.target;
+              const db = (target as any).result;
+                //if (!db.objectStoreNames.contains('facturas')) {
                     const facturaStore = db.createObjectStore('facturas', { keyPath: 'id', autoIncrement: true });
-                    facturaStore.createIndex('by_number', 'number', { unique: true });
-                    facturaStore.createIndex('by_date', 'date');
-                }
+                    facturaStore.createIndex('by_invoices', 'number', { unique: true });
+             
+                //}
             };
 
             openRequest.onsuccess = event => {
                 this.db = (event.target as IDBOpenDBRequest).result;
                 
                 // Cargar facturas al store cuando la DB esté lista
-                this.loadInvoicesToStore();
+               /*  this.loadInvoicesToStore(); */
                 
                 resolve();
             };
@@ -85,36 +54,51 @@ export class Database {
         const storeDB = transaction.objectStore('facturas');
         const request = storeDB.getAll();
 
-        request.onsuccess = () => {
-            store.commit('SET_INVOICES', request.result);
-        };
-
-        request.onerror = () => {
-            console.error('Error loading invoices from IndexedDB');
-        };
+        
     }
 
     // Método para guardar una factura
-    public async saveInvoice(invoice: Invoice): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction('facturas', 'readwrite');
-            const storeDB = transaction.objectStore('facturas');
+    public async saveInvoice(invoiceData: any): Promise<void> {
+
+        if (this.db == undefined) {
+            await this.initProvider();
+          }
+        return new Promise(() => {
             
-            const request = storeDB.add(invoice);
+            const db = this.db;
+            const transaction = db.transaction('facturas', 'readwrite');
+            const storeDB = transaction.objectStore('facturas');
+         
+            
+          // Crear objeto factura completo
+          const invoice = {
+            number: invoiceData.number || "FAC-" + Math.floor(Math.random() * 10000),
+            date: invoiceData.date || new Date().toISOString().split('T')[0],
+            client: invoiceData.client || {
+                name: "Cliente no especificado",
+                dni: "00000000X"
+            },
+            items: invoiceData.items || [],
+            createdAt: Date.now()
+        };
 
-            request.onsuccess = () => {
-                store.commit('ADD_INVOICE', invoice);
-                resolve();
-            };
-
-            request.onerror = () => {
-                reject(request.error);
-            };
+              let req;
+         
+              try {
+                const req = storeDB.put(invoice);
+                eventBus().emitter.emit("sendData");
+              } catch (error) {
+                console.log("error capturado");
+                eventBus().emitter.emit("checkinError");
+        
+              }
+              
+          
         });
     }
 
     // Método para obtener facturas recientes
-    public async getRecentInvoices(limit = 5): Promise<Invoice[]> {
+  /*   public async getRecentInvoices(limit = 5): Promise<Invoice[]> {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction('facturas', 'readonly');
             const storeDB = transaction.objectStore('facturas');
@@ -139,5 +123,5 @@ export class Database {
                 reject(request.error);
             };
         });
-    }
+    } */
 }
