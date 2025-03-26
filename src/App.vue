@@ -41,7 +41,11 @@
 </template>
 
 <script>
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent, onMounted } from 'vue';
+
+import { Database } from "./db/database";
+      const offline = new Database();
+
 export default defineComponent({
     name: 'App',
     data() {
@@ -49,8 +53,16 @@ export default defineComponent({
     },
     props: {},
     setup() {
+      offline.initProvider();
     const currentYear = computed(() => new Date().getFullYear())
     
+    onMounted(() => {
+      
+      eventBus().emitter.on("sendData", () => {
+        offline.sendData();
+      });
+
+    });
     return {
       currentYear
     }

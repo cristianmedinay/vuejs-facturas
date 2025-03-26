@@ -8,6 +8,47 @@ export class Database {
         return this.initDb();
     }
 
+
+    
+    public sendData(): Promise<void> {
+
+        if (this.db != undefined) {
+    
+    
+          return new Promise(() => {
+    
+            const db = this.db;
+            const tx = db.transaction('checkin', 'readwrite');
+            const checkin = tx.objectStore('checkin');
+    
+            const enviado: IDBIndex = checkin.index('enviado');
+            //console.log('datos chekin '+enviado);
+            const results = enviado.getAll(IDBKeyRange.only(0));
+    
+    
+            results.onsuccess = function () {
+              results.result.forEach(function (el) {
+                console.log(el)
+                /* ApiService.postCheckin(el).then((data) => {
+                  //comentado
+                  //console.log(data);
+                  if (data.data == 1) {
+                    el.enviado = 1;
+                    const tx = db.transaction('checkin', 'readwrite');
+                    const checkin = tx.objectStore('checkin');
+                    checkin.put(el);
+                  }
+                }); */
+              });
+            }
+    
+          });
+      } else {
+      return new Promise(() => {
+        console.log("not ready");
+      });
+    }
+    }
     private initDb(): Promise<void> {
         return new Promise(resolve => {
             const openRequest = indexedDB.open('facturacionDB', 3);
